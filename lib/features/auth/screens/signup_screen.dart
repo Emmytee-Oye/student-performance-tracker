@@ -133,7 +133,7 @@ class _SignupScreenState extends ConsumerState<SignupScreen>
             children: [
               // Top Section
               Expanded(
-                flex: 1,
+                flex: 2,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Column(
