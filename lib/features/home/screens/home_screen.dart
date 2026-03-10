@@ -1,10 +1,8 @@
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
 import '../../../app/theme.dart';
 import '../../../services/auth_service.dart';
-import '../../../services/firestore_service.dart';
-import '../providers/home_provider.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -12,8 +10,6 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).valueOrNull;
-    final subjectsAsync = ref.watch(subjectsProvider);
-    final videosAsync = ref.watch(popularVideosProvider);
 
     final subjects = [
       {'name': 'Mathematics', 'icon': Icons.calculate_rounded, 'color': const Color(0xFFFF5733)},
@@ -28,86 +24,70 @@ class HomeScreen extends ConsumerWidget {
       backgroundColor: AppTheme.backgroundColor,
       body: CustomScrollView(
         slivers: [
-          // App Bar
           SliverAppBar(
             expandedHeight: 160,
             floating: false,
             pinned: true,
             backgroundColor: AppTheme.primaryColor,
+            automaticallyImplyLeading: false,
             flexibleSpace: FlexibleSpaceBar(
               background: Container(
                 decoration: const BoxDecoration(
                   gradient: LinearGradient(
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
-                    colors: [
-                      Color(0xFFFF5733),
-                      Color(0xFFFF8C00),
-                    ],
+                    colors: [Color(0xFFFF5733), Color(0xFFFF8C00)],
                   ),
                 ),
                 child: SafeArea(
                   child: Padding(
                     padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            // User Info
-                            Row(
+                            Container(
+                              width: 48,
+                              height: 48,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(16),
+                              ),
+                              child: const Icon(Icons.person_rounded,
+                                  color: AppTheme.primaryColor),
+                            ),
+                            const SizedBox(width: 12),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
                               children: [
-                                Container(
-                                  width: 48,
-                                  height: 48,
-                                  decoration: BoxDecoration(
-                                    color: Colors.white,
-                                    borderRadius: BorderRadius.circular(16),
-                                  ),
-                                  child: const Icon(
-                                    Icons.person_rounded,
-                                    color: AppTheme.primaryColor,
-                                  ),
+                                Text(
+                                  'Hi, ${user?.displayName?.split(' ').first ?? 'Student'} 👋',
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.w700),
                                 ),
-                                const SizedBox(width: 12),
-                                Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      'Hi, ${user?.displayName?.split(' ').first ?? 'Student'} 👋',
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 18,
-                                        fontWeight: FontWeight.w700,
-                                      ),
-                                    ),
-                                    Text(
-                                      'What would you learn today?',
-                                      style: TextStyle(
-                                        color: Colors.white.withOpacity(0.85),
-                                        fontSize: 12,
-                                      ),
-                                    ),
-                                  ],
+                                Text(
+                                  'What would you learn today?',
+                                  style: TextStyle(
+                                      color: Colors.white.withOpacity(0.85),
+                                      fontSize: 12),
                                 ),
                               ],
                             ),
-                            // Notification Icon
-                            Container(
-                              width: 42,
-                              height: 42,
-                              decoration: BoxDecoration(
-                                color: Colors.white.withOpacity(0.2),
-                                borderRadius: BorderRadius.circular(14),
-                              ),
-                              child: const Icon(
-                                Icons.notifications_outlined,
-                                color: Colors.white,
-                                size: 22,
-                              ),
-                            ),
                           ],
+                        ),
+                        Container(
+                          width: 42,
+                          height: 42,
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(14),
+                          ),
+                          child: const Icon(Icons.notifications_outlined,
+                              color: Colors.white, size: 22),
                         ),
                       ],
                     ),
@@ -116,7 +96,6 @@ class HomeScreen extends ConsumerWidget {
               ),
             ),
           ),
-
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(20),
@@ -126,16 +105,15 @@ class HomeScreen extends ConsumerWidget {
                   // Search Bar
                   Container(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
+                        horizontal: 16, vertical: 14),
                     decoration: BoxDecoration(
                       color: Colors.white,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.black.withOpacity(0.05),
-                          blurRadius: 10,
-                          offset: const Offset(0, 4),
-                        ),
+                            color: Colors.black.withOpacity(0.05),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4))
                       ],
                     ),
                     child: Row(
@@ -143,42 +121,32 @@ class HomeScreen extends ConsumerWidget {
                         const Icon(Icons.search_rounded,
                             color: AppTheme.textGrey),
                         const SizedBox(width: 12),
-                        Text(
-                          'Search subjects, topics...',
-                          style: TextStyle(
-                            color: AppTheme.textGrey.withOpacity(0.7),
-                            fontSize: 14,
-                          ),
-                        ),
+                        Text('Search subjects, topics...',
+                            style: TextStyle(
+                                color: AppTheme.textGrey.withOpacity(0.7),
+                                fontSize: 14)),
                       ],
                     ),
                   ),
                   const SizedBox(height: 24),
 
-                  // Subjects Section
+                  // Subjects
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text(
-                        'Subjects',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.w700,
-                          color: AppTheme.textDark,
-                        ),
-                      ),
+                      const Text('Subjects',
+                          style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.w700,
+                              color: AppTheme.textDark)),
                       TextButton(
                         onPressed: () {},
-                        child: const Text(
-                          'See all',
-                          style: TextStyle(color: AppTheme.primaryColor),
-                        ),
+                        child: const Text('See all',
+                            style: TextStyle(color: AppTheme.primaryColor)),
                       ),
                     ],
                   ),
                   const SizedBox(height: 12),
-
-                  // Subjects Grid
                   GridView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -190,76 +158,58 @@ class HomeScreen extends ConsumerWidget {
                       childAspectRatio: 1.6,
                     ),
                     itemCount: subjects.length,
-                    itemBuilder: (context, index) {
-                      final subject = subjects[index];
-                      return _SubjectCard(subject: subject);
-                    },
+                    itemBuilder: (context, index) =>
+                        _SubjectCard(subject: subjects[index]),
                   ),
                   const SizedBox(height: 24),
 
-                  // Popular Videos Section
-                  const Text(
-                    'Popular Videos',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textDark,
-                    ),
-                  ),
+                  // Popular Videos
+                  const Text('Popular Videos',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textDark)),
                   const SizedBox(height: 12),
-
-                  // Videos List
                   SizedBox(
                     height: 140,
                     child: ListView.separated(
                       scrollDirection: Axis.horizontal,
                       itemCount: 5,
                       separatorBuilder: (_, __) => const SizedBox(width: 12),
-                      itemBuilder: (context, index) {
-                        return _VideoCard(index: index);
-                      },
+                      itemBuilder: (_, index) => _VideoCard(index: index),
                     ),
                   ),
                   const SizedBox(height: 24),
 
                   // Quick Stats
-                  const Text(
-                    'Your Progress',
-                    style: TextStyle(
-                      fontSize: 18,
-                      fontWeight: FontWeight.w700,
-                      color: AppTheme.textDark,
-                    ),
-                  ),
+                  const Text('Your Progress',
+                      style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w700,
+                          color: AppTheme.textDark)),
                   const SizedBox(height: 12),
                   Row(
                     children: [
                       Expanded(
-                        child: _StatCard(
-                          title: 'Quizzes\nTaken',
-                          value: '0',
-                          icon: Icons.quiz_rounded,
-                          color: const Color(0xFFFF5733),
-                        ),
-                      ),
+                          child: _StatCard(
+                              title: 'Quizzes\nTaken',
+                              value: '0',
+                              icon: Icons.quiz_rounded,
+                              color: const Color(0xFFFF5733))),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _StatCard(
-                          title: 'Study\nStreak',
-                          value: '0 days',
-                          icon: Icons.local_fire_department_rounded,
-                          color: const Color(0xFFFF9800),
-                        ),
-                      ),
+                          child: _StatCard(
+                              title: 'Study\nStreak',
+                              value: '0 days',
+                              icon: Icons.local_fire_department_rounded,
+                              color: const Color(0xFFFF9800))),
                       const SizedBox(width: 12),
                       Expanded(
-                        child: _StatCard(
-                          title: 'Avg\nScore',
-                          value: '0%',
-                          icon: Icons.trending_up_rounded,
-                          color: const Color(0xFF4CAF50),
-                        ),
-                      ),
+                          child: _StatCard(
+                              title: 'Avg\nScore',
+                              value: '0%',
+                              icon: Icons.trending_up_rounded,
+                              color: const Color(0xFF4CAF50))),
                     ],
                   ),
                   const SizedBox(height: 24),
@@ -269,30 +219,24 @@ class HomeScreen extends ConsumerWidget {
           ),
         ],
       ),
-
-      // Bottom Navigation
       bottomNavigationBar: BottomNavigationBar(
         type: BottomNavigationBarType.fixed,
         selectedItemColor: AppTheme.primaryColor,
         unselectedItemColor: AppTheme.textGrey,
         currentIndex: 0,
+        onTap: (index) {
+          if (index == 1) context.go('/reports');
+          if (index == 3) context.go('/profile');
+        },
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.home_rounded),
-            label: 'Home',
-          ),
+              icon: Icon(Icons.home_rounded), label: 'Home'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.bar_chart_rounded),
-            label: 'Reports',
-          ),
+              icon: Icon(Icons.bar_chart_rounded), label: 'Reports'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.book_rounded),
-            label: 'Subjects',
-          ),
+              icon: Icon(Icons.book_rounded), label: 'Subjects'),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person_rounded),
-            label: 'Profile',
-          ),
+              icon: Icon(Icons.person_rounded), label: 'Profile'),
         ],
       ),
     );
@@ -309,9 +253,7 @@ class _SubjectCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: (subject['color'] as Color).withOpacity(0.12),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: (subject['color'] as Color).withOpacity(0.2),
-        ),
+        border: Border.all(color: (subject['color'] as Color).withOpacity(0.2)),
       ),
       child: Material(
         color: Colors.transparent,
@@ -331,20 +273,14 @@ class _SubjectCard extends StatelessWidget {
                     color: subject['color'] as Color,
                     borderRadius: BorderRadius.circular(10),
                   ),
-                  child: Icon(
-                    subject['icon'] as IconData,
-                    color: Colors.white,
-                    size: 20,
-                  ),
+                  child: Icon(subject['icon'] as IconData,
+                      color: Colors.white, size: 20),
                 ),
-                Text(
-                  subject['name'] as String,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textDark,
-                  ),
-                ),
+                Text(subject['name'] as String,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textDark)),
               ],
             ),
           ),
@@ -361,77 +297,55 @@ class _VideoCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final titles = [
-      'Understanding Motion',
-      'What is a Compound?',
-      'Algebra Basics',
-      'Cell Biology',
-      'Social Systems',
+      'Understanding Motion', 'What is a Compound?',
+      'Algebra Basics', 'Cell Biology', 'Social Systems',
     ];
     final subjects = [
       'Physics', 'Chemistry', 'Mathematics', 'Biology', 'Social Science'
     ];
-
     return Container(
       width: 200,
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05),
+              blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Thumbnail
           Container(
             height: 85,
             decoration: BoxDecoration(
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(16),
-                topRight: Radius.circular(16),
-              ),
-              gradient: LinearGradient(
-                colors: [
-                  AppTheme.primaryColor.withOpacity(0.8),
-                  AppTheme.secondaryColor.withOpacity(0.8),
-                ],
-              ),
+                  topLeft: Radius.circular(16),
+                  topRight: Radius.circular(16)),
+              gradient: LinearGradient(colors: [
+                AppTheme.primaryColor.withOpacity(0.8),
+                AppTheme.secondaryColor.withOpacity(0.8),
+              ]),
             ),
             child: const Center(
-              child: Icon(
-                Icons.play_circle_fill_rounded,
-                color: Colors.white,
-                size: 36,
-              ),
-            ),
+                child: Icon(Icons.play_circle_fill_rounded,
+                    color: Colors.white, size: 36)),
           ),
           Padding(
             padding: const EdgeInsets.all(8),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(
-                  titles[index],
-                  style: const TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: AppTheme.textDark,
-                  ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-                Text(
-                  subjects[index],
-                  style: const TextStyle(
-                    fontSize: 11,
-                    color: AppTheme.textGrey,
-                  ),
-                ),
+                Text(titles[index],
+                    style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textDark),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis),
+                Text(subjects[index],
+                    style: const TextStyle(
+                        fontSize: 11, color: AppTheme.textGrey)),
               ],
             ),
           ),
@@ -446,13 +360,11 @@ class _StatCard extends StatelessWidget {
   final String value;
   final IconData icon;
   final Color color;
-
-  const _StatCard({
-    required this.title,
-    required this.value,
-    required this.icon,
-    required this.color,
-  });
+  const _StatCard(
+      {required this.title,
+      required this.value,
+      required this.icon,
+      required this.color});
 
   @override
   Widget build(BuildContext context) {
@@ -462,34 +374,21 @@ class _StatCard extends StatelessWidget {
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
+          BoxShadow(color: Colors.black.withOpacity(0.05),
+              blurRadius: 10, offset: const Offset(0, 4))
         ],
       ),
       child: Column(
         children: [
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 6),
-          Text(
-            value,
-            style: TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: color,
-            ),
-          ),
+          Text(value,
+              style: TextStyle(
+                  fontSize: 14, fontWeight: FontWeight.w700, color: color)),
           const SizedBox(height: 2),
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            style: const TextStyle(
-              fontSize: 10,
-              color: AppTheme.textGrey,
-            ),
-          ),
+          Text(title,
+              textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 10, color: AppTheme.textGrey)),
         ],
       ),
     );

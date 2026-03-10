@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 class AppTheme {
-  // Colors from your UI
   static const primaryColor = Color(0xFFFF5733);
   static const secondaryColor = Color(0xFFFF8C00);
   static const backgroundColor = Color(0xFFF5F5F5);
@@ -17,7 +16,6 @@ class AppTheme {
       primary: primaryColor,
       secondary: secondaryColor,
     ),
-    fontFamily: 'Poppins',
     appBarTheme: const AppBarTheme(
       backgroundColor: Colors.white,
       elevation: 0,
@@ -42,10 +40,7 @@ class AppTheme {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-          vertical: 14,
-        ),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 14),
       ),
     ),
   );
