@@ -259,7 +259,7 @@ class _SubjectCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () {},
+          onTap: () => context.go('/quiz/${subject['name']}'),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(

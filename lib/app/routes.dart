@@ -6,6 +6,7 @@ import '../features/home/screens/home_screen.dart';
 import '../features/reports/screens/reports_screen.dart';
 import '../features/profile/screens/profile_screen.dart';
 import '../services/auth_service.dart';
+import '../features/quiz/screens/quiz_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -25,6 +26,12 @@ final routerProvider = Provider<GoRouter>((ref) {
         path: '/login',
         builder: (context, state) => const LoginScreen(),
       ),
+      GoRoute(
+  path: '/quiz/:subject',
+  builder: (context, state) => QuizScreen(
+    subjectName: state.pathParameters['subject'] ?? 'General',
+  ),
+),
       GoRoute(
         path: '/signup',
         builder: (context, state) => const SignupScreen(),
