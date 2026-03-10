@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "161141819849",
+    "project_id": "student-performance-trac-80d5e",
+    "storage_bucket": "student-performance-trac-80d5e.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:161141819849:android:354e4e96d211690a618018",
+        "android_client_info": {
+          "package_name": "com.example.student_performance_tracker"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_hGIZTURUvaGdu893fhQetsDg9htm7pc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:161141819849:android:72152eb054301aac618018",
+        "android_client_info": {
+          "package_name": "student_performance_tracker.com"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA_hGIZTURUvaGdu893fhQetsDg9htm7pc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
