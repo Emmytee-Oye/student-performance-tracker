@@ -4,23 +4,33 @@ import 'package:go_router/go_router.dart';
 import '../../../services/auth_service.dart';
 import '../../../app/theme.dart';
 
-class LoginScreen extends ConsumerStatefulWidget {
-  const LoginScreen({super.key});
+class SignupScreen extends ConsumerStatefulWidget {
+  const SignupScreen({super.key});
 
   @override
-  ConsumerState<LoginScreen> createState() => _LoginScreenState();
+  ConsumerState<SignupScreen> createState() => _SignupScreenState();
 }
 
-class _LoginScreenState extends ConsumerState<LoginScreen>
+class _SignupScreenState extends ConsumerState<SignupScreen>
     with TickerProviderStateMixin {
+  final _fullNameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
+  String? _selectedClass;
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+
   late AnimationController _fadeController;
   late AnimationController _slideController;
   late Animation<double> _fadeAnimation;
   late Animation<Offset> _slideAnimation;
+
+  final List<String> _classes = [
+    'JSS 1', 'JSS 2', 'JSS 3',
+    'SS 1', 'SS 2', 'SS 3',
+  ];
 
   @override
   void initState() {
@@ -50,26 +60,47 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   @override
   void dispose() {
+    _fullNameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
+    _confirmPasswordController.dispose();
     _fadeController.dispose();
     _slideController.dispose();
     super.dispose();
   }
 
-  Future<void> _login() async {
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+  Future<void> _signup() async {
+    if (_fullNameController.text.isEmpty ||
+        _emailController.text.isEmpty ||
+        _passwordController.text.isEmpty ||
+        _confirmPasswordController.text.isEmpty ||
+        _selectedClass == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Please fill in all fields')),
       );
       return;
     }
+    if (_passwordController.text != _confirmPasswordController.text) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Passwords do not match')),
+      );
+      return;
+    }
+    if (_passwordController.text.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Password must be at least 6 characters')),
+      );
+      return;
+    }
+
     setState(() => _isLoading = true);
     try {
-      await ref.read(authServiceProvider).signInWithEmail(
+      final credential = await ref.read(authServiceProvider).signUpWithEmail(
             _emailController.text.trim(),
             _passwordController.text.trim(),
           );
+      // Update display name
+      await credential.user?.updateDisplayName(_fullNameController.text.trim());
       if (mounted) context.go('/home');
     } catch (e) {
       if (mounted) {
@@ -100,20 +131,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         child: SafeArea(
           child: Column(
             children: [
-              // Top Section - Logo & Welcome
+              // Top Section
               Expanded(
-                flex: 2,
+                flex: 1,
                 child: FadeTransition(
                   opacity: _fadeAnimation,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Container(
-                        width: 80,
-                        height: 80,
+                        width: 64,
+                        height: 64,
                         decoration: BoxDecoration(
                           color: Colors.white,
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(20),
                           boxShadow: [
                             BoxShadow(
                               color: Colors.black.withOpacity(0.15),
@@ -124,28 +155,26 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                         ),
                         child: const Icon(
                           Icons.school_rounded,
-                          size: 45,
+                          size: 36,
                           color: AppTheme.primaryColor,
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       const Text(
                         'StudyTrack',
                         style: TextStyle(
-                          fontSize: 32,
+                          fontSize: 26,
                           fontWeight: FontWeight.w800,
                           color: Colors.white,
                           letterSpacing: 1.2,
                         ),
                       ),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 4),
                       Text(
-                        'Track your academic journey',
+                        'Create your account',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 14,
                           color: Colors.white.withOpacity(0.85),
-                          fontWeight: FontWeight.w400,
-                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -153,9 +182,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                 ),
               ),
 
-              // Bottom Section - Form
+              // Form Section
               Expanded(
-                flex: 3,
+                flex: 4,
                 child: SlideTransition(
                   position: _slideAnimation,
                   child: FadeTransition(
@@ -174,24 +203,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             const Text(
-                              'Welcome back ',
+                              'Let\'s get started! 🎓',
                               style: TextStyle(
-                                fontSize: 24,
+                                fontSize: 22,
                                 fontWeight: FontWeight.w800,
                                 color: AppTheme.textDark,
                               ),
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Sign in to continue your learning',
+                              'Fill in your details to create an account',
                               style: TextStyle(
-                                fontSize: 14,
+                                fontSize: 13,
                                 color: AppTheme.textGrey,
                               ),
                             ),
-                            const SizedBox(height: 28),
+                            const SizedBox(height: 24),
 
-                            // Email Field
+                            // Full Name
+                            _buildTextField(
+                              controller: _fullNameController,
+                              label: 'Full Name',
+                              hint: 'John Doe',
+                              icon: Icons.person_outline_rounded,
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Email
                             _buildTextField(
                               controller: _emailController,
                               label: 'Email Address',
@@ -199,9 +237,62 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                               icon: Icons.email_outlined,
                               keyboardType: TextInputType.emailAddress,
                             ),
-                            const SizedBox(height: 16),
+                            const SizedBox(height: 14),
 
-                            // Password Field
+                            // Class Selector
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Class',
+                                  style: TextStyle(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: AppTheme.textDark,
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 16),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFFF8F9FA),
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                  child: DropdownButtonHideUnderline(
+                                    child: DropdownButton<String>(
+                                      value: _selectedClass,
+                                      isExpanded: true,
+                                      hint: Text(
+                                        'Select your class',
+                                        style: TextStyle(
+                                          color: AppTheme.textGrey
+                                              .withOpacity(0.6),
+                                          fontSize: 14,
+                                        ),
+                                      ),
+                                      icon: const Icon(
+                                        Icons.keyboard_arrow_down_rounded,
+                                        color: AppTheme.textGrey,
+                                      ),
+                                      items: _classes.map((String value) {
+                                        return DropdownMenuItem<String>(
+                                          value: value,
+                                          child: Text(value),
+                                        );
+                                      }).toList(),
+                                      onChanged: (value) {
+                                        setState(
+                                            () => _selectedClass = value);
+                                      },
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 14),
+
+                            // Password
                             _buildTextField(
                               controller: _passwordController,
                               label: 'Password',
@@ -219,38 +310,43 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                     () => _obscurePassword = !_obscurePassword),
                               ),
                             ),
+                            const SizedBox(height: 14),
 
-                            // Forgot Password
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: TextButton(
-                                onPressed: () {},
-                                child: const Text(
-                                  'Forgot Password?',
-                                  style: TextStyle(
-                                    color: AppTheme.primaryColor,
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                            // Confirm Password
+                            _buildTextField(
+                              controller: _confirmPasswordController,
+                              label: 'Confirm Password',
+                              hint: '••••••••',
+                              icon: Icons.lock_outline_rounded,
+                              obscureText: _obscureConfirmPassword,
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _obscureConfirmPassword
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                  color: AppTheme.textGrey,
                                 ),
+                                onPressed: () => setState(() =>
+                                    _obscureConfirmPassword =
+                                        !_obscureConfirmPassword),
                               ),
                             ),
+                            const SizedBox(height: 24),
 
-                            const SizedBox(height: 8),
-
-                            // Login Button
+                            // Sign Up Button
                             SizedBox(
                               width: double.infinity,
                               height: 54,
                               child: ElevatedButton(
-                                onPressed: _isLoading ? null : _login,
+                                onPressed: _isLoading ? null : _signup,
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: AppTheme.primaryColor,
                                   shape: RoundedRectangleBorder(
                                     borderRadius: BorderRadius.circular(16),
                                   ),
                                   elevation: 4,
-                                  shadowColor: AppTheme.primaryColor
-                                      .withOpacity(0.4),
+                                  shadowColor:
+                                      AppTheme.primaryColor.withOpacity(0.4),
                                 ),
                                 child: _isLoading
                                     ? const SizedBox(
@@ -262,7 +358,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                         ),
                                       )
                                     : const Text(
-                                        'Sign In',
+                                        'Create Account',
                                         style: TextStyle(
                                           fontSize: 16,
                                           fontWeight: FontWeight.w700,
@@ -271,41 +367,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                       ),
                               ),
                             ),
-
                             const SizedBox(height: 20),
 
-                            // Divider
-                            Row(
-                              children: [
-                                Expanded(
-                                    child: Divider(color: Colors.grey[300])),
-                                Padding(
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 12),
-                                  child: Text(
-                                    'or',
-                                    style: TextStyle(color: AppTheme.textGrey),
-                                  ),
-                                ),
-                                Expanded(
-                                    child: Divider(color: Colors.grey[300])),
-                              ],
-                            ),
-
-                            const SizedBox(height: 20),
-
-                            // Sign Up Link
+                            // Login Link
                             Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
                                 Text(
-                                  "Don't have an account? ",
-                                  style: TextStyle(color: AppTheme.textGrey),
+                                  'Already have an account? ',
+                                  style:
+                                      TextStyle(color: AppTheme.textGrey),
                                 ),
                                 GestureDetector(
-                                  onTap: () => context.go('/signup'),
+                                  onTap: () => context.go('/login'),
                                   child: const Text(
-                                    'Sign Up',
+                                    'Sign In',
                                     style: TextStyle(
                                       color: AppTheme.primaryColor,
                                       fontWeight: FontWeight.w700,
@@ -314,6 +390,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
                                 ),
                               ],
                             ),
+                            const SizedBox(height: 16),
                           ],
                         ),
                       ),
@@ -355,7 +432,8 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
           keyboardType: keyboardType,
           decoration: InputDecoration(
             hintText: hint,
-            hintStyle: TextStyle(color: AppTheme.textGrey.withOpacity(0.6)),
+            hintStyle:
+                TextStyle(color: AppTheme.textGrey.withOpacity(0.6)),
             prefixIcon: Icon(icon, color: AppTheme.textGrey, size: 20),
             suffixIcon: suffixIcon,
             filled: true,
