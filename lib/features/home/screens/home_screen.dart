@@ -226,6 +226,7 @@ class HomeScreen extends ConsumerWidget {
         currentIndex: 0,
         onTap: (index) {
           if (index == 1) context.go('/reports');
+          if (index == 2) context.go('/subjects');
           if (index == 3) context.go('/profile');
         },
         items: const [
@@ -259,7 +260,7 @@ class _SubjectCard extends StatelessWidget {
         color: Colors.transparent,
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
-          onTap: () => context.go('/quiz/${subject['name']}'),
+          onTap: () => context.go('/subject/${subject['name']}'),
           child: Padding(
             padding: const EdgeInsets.all(14),
             child: Column(

@@ -171,6 +171,7 @@ class _ReportsScreenState extends ConsumerState<ReportsScreen>
         currentIndex: 1,
         onTap: (index) {
           if (index == 0) context.go('/home');
+          if (index == 2) context.go('/subjects');
           if (index == 3) context.go('/profile');
         },
         items: const [

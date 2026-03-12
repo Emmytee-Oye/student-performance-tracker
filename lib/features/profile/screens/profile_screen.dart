@@ -185,6 +185,7 @@ class ProfileScreen extends ConsumerWidget {
         onTap: (index) {
           if (index == 0) context.go('/home');
           if (index == 1) context.go('/reports');
+          if (index == 2) context.go('/subjects');
         },
         items: const [
           BottomNavigationBarItem(
