@@ -34,4 +34,18 @@ class AuthService {
   Future<void> signOut() async {
     await _auth.signOut();
   }
+
+  Future<void> updateProfile({required String displayName}) async {}
+}
+Future<void> updateProfile({
+  String? displayName,
+  String? photoURL,
+}) async {
+  await _auth.currentUser?.updateDisplayName(displayName);
+  await _auth.currentUser?.updatePhotoURL(photoURL);
+  await _auth.currentUser?.reload();
+}
+
+class _auth {
+  static get currentUser => null;
 }

@@ -55,4 +55,28 @@ class FirestoreService {
         .collection('progress')
         .snapshots();
   }
+
+  Future<void> updateUserProfile({required String fullName, String? className}) async {}
+
+  Future<Object?> getUserProfileData() async {}
+}
+// Update user profile
+Future<void> updateUserProfile({
+  String? fullName,
+  String? photoUrl,
+  String? className,
+}) async {
+  final Map<String, dynamic> data = {};
+  if (fullName != null) data['fullName'] = fullName;
+  if (photoUrl != null) data['photoUrl'] = photoUrl;
+  if (className != null) data['class'] = className;
+  var _db;
+  var userId;
+  await _db.collection('users').doc(userId).update(data);
+}
+
+// Get user profile once
+Future<Map<String, dynamic>?> getUserProfileData(dynamic _db, dynamic userId) async {
+  final doc = await _db.collection('users').doc(userId).get();
+  return doc.data();
 }

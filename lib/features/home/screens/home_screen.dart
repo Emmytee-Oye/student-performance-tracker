@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/firestore_service.dart';
+import '../../profile/screens/profile_screen.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -10,6 +12,7 @@ class HomeScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).valueOrNull;
+    final profileAsync = ref.watch(userProfileProvider);
 
     final subjects = [
       {'name': 'Mathematics', 'icon': Icons.calculate_rounded, 'color': const Color(0xFFFF5733)},
@@ -19,6 +22,16 @@ class HomeScreen extends ConsumerWidget {
       {'name': 'Reasoning', 'icon': Icons.psychology_rounded, 'color': const Color(0xFFFF9800)},
       {'name': 'Social Science', 'icon': Icons.public_rounded, 'color': const Color(0xFF00BCD4)},
     ];
+
+    // Get real-time first name
+    String firstName = 'Student';
+    profileAsync.whenData((data) {
+      if (data?['fullName'] != null) {
+        firstName = (data!['fullName'] as String).split(' ').first;
+      } else if (user?.displayName != null) {
+        firstName = user!.displayName!.split(' ').first;
+      }
+    });
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
@@ -47,27 +60,52 @@ class HomeScreen extends ConsumerWidget {
                       children: [
                         Row(
                           children: [
-                            Container(
-                              width: 48,
-                              height: 48,
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(16),
+                            GestureDetector(
+                              onTap: () => context.go('/profile'),
+                              child: Container(
+                                width: 48,
+                                height: 48,
+                                decoration: BoxDecoration(
+                                  color: Colors.white,
+                                  borderRadius: BorderRadius.circular(16),
+                                ),
+                                child: user?.photoURL != null
+                                    ? ClipRRect(
+                                        borderRadius: BorderRadius.circular(16),
+                                        child: Image.network(user!.photoURL!,
+                                            fit: BoxFit.cover))
+                                    : const Icon(Icons.person_rounded,
+                                        color: AppTheme.primaryColor),
                               ),
-                              child: const Icon(Icons.person_rounded,
-                                  color: AppTheme.primaryColor),
                             ),
                             const SizedBox(width: 12),
                             Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Text(
-                                  'Hi, ${user?.displayName?.split(' ').first ?? 'Student'} 👋',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 18,
-                                      fontWeight: FontWeight.w700),
+                                // Real-time name update
+                                profileAsync.when(
+                                  data: (data) => Text(
+                                    'Hi, ${data?['fullName']?.split(' ').first ?? user?.displayName?.split(' ').first ?? 'Student'} 👋',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                  loading: () => Text(
+                                    'Hi, ${user?.displayName?.split(' ').first ?? 'Student'} 👋',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700),
+                                  ),
+                                  error: (_, __) => Text(
+                                    'Hi, ${user?.displayName?.split(' ').first ?? 'Student'} 👋',
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700),
+                                  ),
                                 ),
                                 Text(
                                   'What would you learn today?',
@@ -102,30 +140,36 @@ class HomeScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Search Bar
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 14),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(16),
-                      boxShadow: [
-                        BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4))
-                      ],
+                  // Search Bar — now functional
+                  GestureDetector(
+                    onTap: () => showSearch(
+                      context: context,
+                      delegate: SubjectSearchDelegate(subjects: subjects),
                     ),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.search_rounded,
-                            color: AppTheme.textGrey),
-                        const SizedBox(width: 12),
-                        Text('Search subjects, topics...',
-                            style: TextStyle(
-                                color: AppTheme.textGrey.withOpacity(0.7),
-                                fontSize: 14)),
-                      ],
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 16, vertical: 14),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        boxShadow: [
+                          BoxShadow(
+                              color: Colors.black.withOpacity(0.05),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4))
+                        ],
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.search_rounded,
+                              color: AppTheme.textGrey),
+                          const SizedBox(width: 12),
+                          Text('Search subjects, topics...',
+                              style: TextStyle(
+                                  color: AppTheme.textGrey.withOpacity(0.7),
+                                  fontSize: 14)),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -140,7 +184,7 @@ class HomeScreen extends ConsumerWidget {
                               fontWeight: FontWeight.w700,
                               color: AppTheme.textDark)),
                       TextButton(
-                        onPressed: () {},
+                        onPressed: () => context.go('/subjects'),
                         child: const Text('See all',
                             style: TextStyle(color: AppTheme.primaryColor)),
                       ),
@@ -240,6 +284,125 @@ class HomeScreen extends ConsumerWidget {
               icon: Icon(Icons.person_rounded), label: 'Profile'),
         ],
       ),
+    );
+  }
+}
+
+// Search Delegate
+class SubjectSearchDelegate extends SearchDelegate {
+  final List<Map<String, dynamic>> subjects;
+  SubjectSearchDelegate({required this.subjects});
+
+  @override
+  ThemeData appBarTheme(BuildContext context) {
+    return Theme.of(context).copyWith(
+      appBarTheme: const AppBarTheme(
+        backgroundColor: AppTheme.primaryColor,
+        iconTheme: IconThemeData(color: Colors.white),
+      ),
+      inputDecorationTheme: const InputDecorationTheme(
+        hintStyle: TextStyle(color: Colors.white70),
+        border: InputBorder.none,
+      ),
+      textTheme: const TextTheme(
+        titleLarge: TextStyle(color: Colors.white, fontSize: 16),
+      ),
+    );
+  }
+
+  @override
+  String get searchFieldLabel => 'Search subjects...';
+
+  @override
+  List<Widget> buildActions(BuildContext context) {
+    return [
+      if (query.isNotEmpty)
+        IconButton(
+          icon: const Icon(Icons.clear, color: Colors.white),
+          onPressed: () => query = '',
+        ),
+    ];
+  }
+
+  @override
+  Widget buildLeading(BuildContext context) {
+    return IconButton(
+      icon: const Icon(Icons.arrow_back_ios_rounded, color: Colors.white),
+      onPressed: () => close(context, null),
+    );
+  }
+
+  @override
+  Widget buildResults(BuildContext context) => _buildList(context);
+
+  @override
+  Widget buildSuggestions(BuildContext context) => _buildList(context);
+
+  Widget _buildList(BuildContext context) {
+    final results = query.isEmpty
+        ? subjects
+        : subjects
+            .where((s) => (s['name'] as String)
+                .toLowerCase()
+                .contains(query.toLowerCase()))
+            .toList();
+
+    if (results.isEmpty) {
+      return const Center(
+        child: Text('No subjects found',
+            style: TextStyle(color: AppTheme.textGrey)),
+      );
+    }
+
+    return ListView.separated(
+      padding: const EdgeInsets.all(16),
+      itemCount: results.length,
+      separatorBuilder: (_, __) => const SizedBox(height: 10),
+      itemBuilder: (context, index) {
+        final subject = results[index];
+        return GestureDetector(
+          onTap: () {
+            close(context, null);
+            context.go('/subject/${subject['name']}');
+          },
+          child: Container(
+            padding: const EdgeInsets.all(14),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(14),
+              boxShadow: [
+                BoxShadow(
+                    color: Colors.black.withOpacity(0.04),
+                    blurRadius: 8,
+                    offset: const Offset(0, 2))
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: (subject['color'] as Color).withOpacity(0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(subject['icon'] as IconData,
+                      color: subject['color'] as Color, size: 22),
+                ),
+                const SizedBox(width: 12),
+                Text(subject['name'] as String,
+                    style: const TextStyle(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                        color: AppTheme.textDark)),
+                const Spacer(),
+                const Icon(Icons.arrow_forward_ios_rounded,
+                    size: 14, color: AppTheme.textGrey),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 }

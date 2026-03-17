@@ -3,6 +3,19 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import '../../../app/theme.dart';
 import '../../../services/auth_service.dart';
+import '../../../services/firestore_service.dart';
+
+// Real-time user profile provider
+final userProfileProvider = StreamProvider<Map<String, dynamic>?>((ref) {
+  final firestoreService = ref.watch(firestoreServiceProvider);
+  try {
+    return firestoreService.getUserProfile().map((doc) {
+      return doc.data() as Map<String, dynamic>?;
+    });
+  } catch (e) {
+    return Stream.value(null);
+  }
+});
 
 class ProfileScreen extends ConsumerWidget {
   const ProfileScreen({super.key});
@@ -10,13 +23,14 @@ class ProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final user = ref.watch(authStateProvider).valueOrNull;
+    final profileAsync = ref.watch(userProfileProvider);
 
     return Scaffold(
       backgroundColor: AppTheme.backgroundColor,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
-            expandedHeight: 200,
+            expandedHeight: 220,
             pinned: true,
             automaticallyImplyLeading: false,
             backgroundColor: AppTheme.primaryColor,
@@ -33,37 +47,95 @@ class ProfileScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Container(
-                        width: 80,
-                        height: 80,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                                color: Colors.black.withOpacity(0.15),
-                                blurRadius: 20,
-                                offset: const Offset(0, 8))
-                          ],
-                        ),
-                        child: const Icon(Icons.person_rounded,
-                            color: AppTheme.primaryColor, size: 44),
+                      Stack(
+                        alignment: Alignment.bottomRight,
+                        children: [
+                          Container(
+                            width: 85,
+                            height: 85,
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              shape: BoxShape.circle,
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.15),
+                                  blurRadius: 20,
+                                  offset: const Offset(0, 8),
+                                ),
+                              ],
+                            ),
+                            child: user?.photoURL != null
+                                ? ClipOval(
+                                    child: Image.network(user!.photoURL!,
+                                        fit: BoxFit.cover))
+                                : const Icon(Icons.person_rounded,
+                                    color: AppTheme.primaryColor, size: 48),
+                          ),
+                          GestureDetector(
+                            onTap: () => context.go('/edit-profile'),
+                            child: Container(
+                              width: 28,
+                              height: 28,
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                      color: Colors.black.withOpacity(0.1),
+                                      blurRadius: 8)
+                                ],
+                              ),
+                              child: const Icon(Icons.edit_rounded,
+                                  color: AppTheme.primaryColor, size: 14),
+                            ),
+                          ),
+                        ],
                       ),
                       const SizedBox(height: 12),
-                      Text(
-                        user?.displayName ?? 'Student',
-                        style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w700),
+                      profileAsync.when(
+                        data: (data) => Text(
+                          data?['fullName'] ?? user?.displayName ?? 'Student',
+                          style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 20,
+                              fontWeight: FontWeight.w700),
+                        ),
+                        loading: () => Text(user?.displayName ?? 'Student',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700)),
+                        error: (_, __) => Text(user?.displayName ?? 'Student',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 20,
+                                fontWeight: FontWeight.w700)),
                       ),
                       const SizedBox(height: 4),
-                      Text(
-                        user?.email ?? '',
-                        style: TextStyle(
-                            color: Colors.white.withOpacity(0.85),
-                            fontSize: 13),
+                      profileAsync.when(
+                        data: (data) => data?['class'] != null
+                            ? Container(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 12, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(12),
+                                ),
+                                child: Text(data!['class'],
+                                    style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600)),
+                              )
+                            : const SizedBox.shrink(),
+                        loading: () => const SizedBox.shrink(),
+                        error: (_, __) => const SizedBox.shrink(),
                       ),
+                      const SizedBox(height: 4),
+                      Text(user?.email ?? '',
+                          style: TextStyle(
+                              color: Colors.white.withOpacity(0.85),
+                              fontSize: 12)),
                     ],
                   ),
                 ),
@@ -76,7 +148,6 @@ class ProfileScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Stats Row
                   Row(
                     children: [
                       Expanded(
@@ -99,8 +170,6 @@ class ProfileScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-
-                  // Explore Section
                   const Text('Explore',
                       style: TextStyle(
                           fontSize: 18,
@@ -125,8 +194,6 @@ class ProfileScreen extends ConsumerWidget {
                     ],
                   ),
                   const SizedBox(height: 24),
-
-                  // Settings Section
                   const Text('Settings',
                       style: TextStyle(
                           fontSize: 18,
@@ -136,7 +203,7 @@ class ProfileScreen extends ConsumerWidget {
                   _SettingsTile(
                       icon: Icons.person_outline_rounded,
                       title: 'Edit Profile',
-                      onTap: () {}),
+                      onTap: () => context.go('/edit-profile')),
                   _SettingsTile(
                       icon: Icons.notifications_outlined,
                       title: 'Notifications',
@@ -150,7 +217,6 @@ class ProfileScreen extends ConsumerWidget {
                       title: 'Help & Support',
                       onTap: () {}),
                   const SizedBox(height: 12),
-                  // Sign Out
                   SizedBox(
                     width: double.infinity,
                     height: 54,
@@ -227,12 +293,11 @@ class _StatCard extends StatelessWidget {
         children: [
           Text(value,
               style: TextStyle(
-                  fontSize: 16, fontWeight: FontWeight.w700, color: color)),
+                  fontSize: 14, fontWeight: FontWeight.w700, color: color)),
           const SizedBox(height: 4),
           Text(label,
               textAlign: TextAlign.center,
-              style: const TextStyle(
-                  fontSize: 10, color: AppTheme.textGrey)),
+              style: const TextStyle(fontSize: 10, color: AppTheme.textGrey)),
         ],
       ),
     );

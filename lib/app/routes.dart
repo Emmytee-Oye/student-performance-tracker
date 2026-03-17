@@ -12,6 +12,7 @@ import '../features/quiz/screens/quiz_screen.dart';
 import '../features/video/screens/video_screen.dart';
 import '../features/splash/screens/splash_screen.dart';
 import '../services/auth_service.dart';
+import '../features/profile/screens/edit_profile_screen.dart';
 
 final routerProvider = Provider<GoRouter>((ref) {
   final authState = ref.watch(authStateProvider);
@@ -75,6 +76,7 @@ final routerProvider = Provider<GoRouter>((ref) {
           chapterName: state.pathParameters['chapter'] ?? 'Chapter',
         ),
       ),
+      
       GoRoute(
         path: '/profile',
         builder: (context, state) => const ProfileScreen(),
